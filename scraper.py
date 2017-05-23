@@ -7,6 +7,7 @@ from PIL import Image
 import praw
 import pyimgur
 import requests
+from urllib.parse import urlparse
 
 
 def download_image(url, outfile_name):
@@ -31,14 +32,14 @@ def process_imgur_submission(imgur, url, outfile_name):
     if '/a/' in url:
         # is album
         print(url, 'is an Imgur album')
-        album_id = url.split('/')[-1]
+        album_id = urlparse(url).path.split('/')[-1]
         album = imgur.get_album(album_id)
         for idx, image in enumerate(album.images):
             download_image(image.link, '{0}-{1}'.format(outfile_name, idx))
     else:
         # is single image
         print(url, 'is an Imgur image')
-        filename = url.split('/')[-1]
+        filename = urlparse(url).path.split('/')[-1]
         download_image('http://i.imgur.com/{0}.png'.format(filename), outfile_name)
 
 
