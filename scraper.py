@@ -8,7 +8,7 @@ import praw
 import requests
 
 
-def process_submission(sub, outfile_name, resized_height=360):
+def process_submission(sub, outfile_name):
     """Extract image from submission. If it exists, processes and saves it."""
     if not sub.url.endswith(('.jpg', '.jpeg', '.png')):
         print('Skipping', sub.url)
@@ -24,7 +24,8 @@ def process_submission(sub, outfile_name, resized_height=360):
 
     width, height = im.size
     aspect_ratio = width / height
-    im = im.resize((int(aspect_ratio * resized_height), resized_height))
+    im = im.resize(
+        (int(aspect_ratio * FLAGS.output_height), FLAGS.output_height))
     im.save(os.path.join(FLAGS.output_dir, outfile_name))
 
 
@@ -42,6 +43,9 @@ if __name__ == '__main__':
     parser.add_argument(
         '--output_dir', type=str, default='data',
         help='Output directory for collected data.')
+    parser.add_argument(
+        '--output_height', type=int, default=180,
+        help='Output image height. Width can be variable.')
     global FLAGS
     FLAGS, unparsed = parser.parse_known_args()
 
@@ -54,5 +58,6 @@ if __name__ == '__main__':
     oc_subs = r.subreddit('vexillology').search("flair:'OC'", limit=1000)
     count = 0
     for sub in oc_subs:
+        # TODO: Don't skip Imgur images and albums
         process_submission(sub, '{0}.png'.format(count))
         count += 1
