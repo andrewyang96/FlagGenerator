@@ -5,20 +5,17 @@ import io
 import os
 from PIL import Image
 import praw
+import pyimgur
 import requests
 
 
-def process_submission(sub, outfile_name):
-    """Extract image from submission. If it exists, processes and saves it."""
-    if not sub.url.endswith(('.jpg', '.jpeg', '.png')):
-        print('Skipping', sub.url)
-        return
-    print('Processing', sub.url)
-
+def download_image(url, outfile_name):
+    """Download image into output_dir."""
+    print('Downloading', url)
     try:
-        file = io.BytesIO(requests.get(sub.url).content)
+        file = io.BytesIO(requests.get(url).content)
     except requests.exceptions.ConnectionError:
-        print("Couldn't retrieve", sub.url)
+        print("Couldn't download", url)
         return
     im = Image.open(file).convert('RGB')
 
@@ -26,17 +23,46 @@ def process_submission(sub, outfile_name):
     aspect_ratio = width / height
     im = im.resize(
         (int(aspect_ratio * FLAGS.output_height), FLAGS.output_height))
-    im.save(os.path.join(FLAGS.output_dir, outfile_name))
+    im.save(os.path.join(FLAGS.output_dir, '{0}.png'.format(outfile_name)))
+
+
+def process_imgur_submission(imgur, url, outfile_name):
+    """Extract image(s) from Imgur submission."""
+    if '/a/' in url:
+        # is album
+        print(url, 'is an Imgur album')
+        album_id = url.split('/')[-1]
+        album = imgur.get_album(album_id)
+        for idx, image in enumerate(album.images):
+            download_image(image.link, '{0}-{1}'.format(outfile_name, idx))
+    else:
+        # is single image
+        print(url, 'is an Imgur image')
+        filename = url.split('/')[-1]
+        download_image('http://i.imgur.com/{0}.png'.format(filename), outfile_name)
+
+
+def process_submission(imgur, sub, outfile_name):
+    """Extract image from submission. If it exists, processes and saves it."""
+    if '/imgur.com/' in sub.url:
+        return process_imgur_submission(imgur, sub.url, outfile_name)
+    if not sub.url.endswith(('.jpg', '.jpeg', '.png')):
+        print('Skipping', sub.url)
+        return
+    download_image(sub.url, outfile_name)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--client_id', type=str,
-        help="Client ID, retrieved from Reddit's developer console.")
+        '--reddit_client_id', type=str,
+        help='Reddit client ID.')
     parser.add_argument(
-        '--client_secret', type=str,
-        help="Client secret, retrieved from Reddit's developer console.")
+        '--reddit_client_secret', type=str,
+        help='Reddit client secret.')
+    parser.add_argument(
+        '--imgur_client_id', type=str,
+        help='Imgur client ID.')
     parser.add_argument(
         '--user_agent', type=str, default='flag_generator_scraper',
         help='User agent for Reddit requests.')
@@ -53,11 +79,12 @@ if __name__ == '__main__':
         os.mkdir(FLAGS.output_dir)
 
     r = praw.Reddit(
-        client_id=FLAGS.client_id, client_secret=FLAGS.client_secret,
+        client_id=FLAGS.reddit_client_id,
+        client_secret=FLAGS.reddit_client_secret,
         user_agent=FLAGS.user_agent)
+    imgur = pyimgur.Imgur(FLAGS.imgur_client_id)
     oc_subs = r.subreddit('vexillology').search("flair:'OC'", limit=1000)
     count = 0
     for sub in oc_subs:
-        # TODO: Don't skip Imgur images and albums
-        process_submission(sub, '{0}.png'.format(count))
+        process_submission(imgur, sub, count)
         count += 1
