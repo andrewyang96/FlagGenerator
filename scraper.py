@@ -67,10 +67,10 @@ if __name__ == '__main__':
         '--output_dir', type=str, default='data',
         help='Output directory for collected data.')
     parser.add_argument(
-        '--output_width', type=int, default=240,
+        '--output_width', type=int, default=180,
         help='Output image width.')
     parser.add_argument(
-        '--output_height', type=int, default=180,
+        '--output_height', type=int, default=120,
         help='Output image height.')
     global FLAGS
     FLAGS, unparsed = parser.parse_known_args()
