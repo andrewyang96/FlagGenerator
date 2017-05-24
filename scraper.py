@@ -19,11 +19,7 @@ def download_image(url, outfile_name):
         print("Couldn't download", url)
         return
     im = Image.open(file).convert('RGB')
-
-    width, height = im.size
-    aspect_ratio = width / height
-    im = im.resize(
-        (int(aspect_ratio * FLAGS.output_height), FLAGS.output_height))
+    im = im.resize((FLAGS.output_width, FLAGS.output_height))
     im.save(os.path.join(FLAGS.output_dir, '{0}.png'.format(outfile_name)))
 
 
@@ -71,8 +67,11 @@ if __name__ == '__main__':
         '--output_dir', type=str, default='data',
         help='Output directory for collected data.')
     parser.add_argument(
+        '--output_width', type=int, default=240,
+        help='Output image width.')
+    parser.add_argument(
         '--output_height', type=int, default=180,
-        help='Output image height. Width can be variable.')
+        help='Output image height.')
     global FLAGS
     FLAGS, unparsed = parser.parse_known_args()
 
