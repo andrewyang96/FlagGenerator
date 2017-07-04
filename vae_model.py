@@ -20,8 +20,8 @@ SUMMARY_STEP = 100
 MODEL_PATH = '/tmp/flag_generator_vae.ckpt'
 
 # network parameters
-INPUT_WIDTH = 72
-INPUT_HEIGHT = 48
+INPUT_WIDTH = 48
+INPUT_HEIGHT = 32
 NUM_CHANNELS = 3
 
 
@@ -35,28 +35,28 @@ def encoder(x):
     with tf.name_scope('encoder1'):
         with tf.name_scope('weights'):
             weights1 = weight_variable(
-                [INPUT_WIDTH * INPUT_HEIGHT * NUM_CHANNELS, 4096], stddev=0.001)
+                [INPUT_WIDTH * INPUT_HEIGHT * NUM_CHANNELS, 2048], stddev=0.01)
             variable_summaries(weights1)
         with tf.name_scope('biases'):
-            biases1 = bias_variable([4096], init_val=0.001)
+            biases1 = bias_variable([2048], init_val=0.01)
         layer1 = fc_layer(x, weights1, biases1)
 
     # Mu encoder layer
     with tf.name_scope('mu_encoder'):
         with tf.name_scope('weights'):
-            weights_mu = weight_variable([4096, 1024], stddev=0.001)
+            weights_mu = weight_variable([2048, 512], stddev=0.01)
             variable_summaries(weights_mu)
         with tf.name_scope('biases'):
-            biases_mu = bias_variable([1024], init_val=0.001)
+            biases_mu = bias_variable([512], init_val=0.01)
         mu_encoder = fc_layer(layer1, weights_mu, biases_mu)
 
     # Log(sigma) encoder layer
     with tf.name_scope('log_sigma_encoder'):
         with tf.name_scope('weights'):
-            weights_log_sigma = weight_variable([4096, 1024], stddev=0.001)
+            weights_log_sigma = weight_variable([2048, 512], stddev=0.01)
             variable_summaries(weights_log_sigma)
         with tf.name_scope('biases'):
-            biases_log_sigma = bias_variable([1024], init_val=0.001)
+            biases_log_sigma = bias_variable([512], init_val=0.01)
         log_sigma_encoder = fc_layer(
             layer1, weights_log_sigma, biases_log_sigma)
 
@@ -76,21 +76,21 @@ def decoder(x):
     # Decoding layer 1
     with tf.name_scope('decoder1'):
         with tf.name_scope('weights'):
-            weights1 = weight_variable([1024, 4096], stddev=0.001)
+            weights1 = weight_variable([512, 2048], stddev=0.01)
             variable_summaries(weights1)
         with tf.name_scope('biases'):
-            biases1 = bias_variable([4096], init_val=0.001)
+            biases1 = bias_variable([2048], init_val=0.01)
         layer1 = fc_layer(x, weights1, biases1)
 
     # Decoding layer 2
     with tf.name_scope('decoder2'):
         with tf.name_scope('weights'):
             weights2 = weight_variable(
-                [4096, INPUT_WIDTH * INPUT_HEIGHT * NUM_CHANNELS], stddev=0.001)
+                [2048, INPUT_WIDTH * INPUT_HEIGHT * NUM_CHANNELS], stddev=0.01)
             variable_summaries(weights2)
         with tf.name_scope('biases'):
             biases2 = bias_variable(
-                [INPUT_WIDTH * INPUT_HEIGHT * NUM_CHANNELS], init_val=0.001)
+                [INPUT_WIDTH * INPUT_HEIGHT * NUM_CHANNELS], init_val=0.01)
         layer2 = fc_layer(layer1, weights2, biases2)
     return layer2
 
@@ -187,10 +187,10 @@ def main(_):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--max_steps', type=int, default=1000,
+        '--max_steps', type=int, default=2000,
         help='Number of steps to run trainer.')
     parser.add_argument(
-        '--learning_rate', type=float, default=0.001,
+        '--learning_rate', type=float, default=0.0001,
         help='Initial learning rate')
     parser.add_argument(
         '--dropout', type=float, default=0.9,
