@@ -145,8 +145,14 @@ def train():
     tf.summary.scalar('loss', cost)
 
     with tf.name_scope('train'):
+        global_step = tf.Variable(0, trainable=False)
+        learning_rate = tf.train.exponential_decay(
+            FLAGS.learning_rate, global_step, FLAGS.decay_steps,
+            FLAGS.decay_rate, staircase=True)
+        tf.summary.scalar('learning_rate', learning_rate)
         train_step = tf.train.RMSPropOptimizer(
-            learning_rate=FLAGS.learning_rate).minimize(cost)
+            learning_rate=FLAGS.learning_rate).minimize(
+            cost, global_step=global_step)
 
     # Merge all summaries
     merged = tf.summary.merge_all()
@@ -210,6 +216,12 @@ if __name__ == '__main__':
     parser.add_argument(
         '--learning_rate', type=float, default=0.0001,
         help='Initial learning rate')
+    parser.add_argument(
+        '--decay_rate', type=float, default=0.95,
+        help='Learning rate decay')
+    parser.add_argument(
+        '--decay_steps', type=float, default=500,
+        help='Apply learning_decay every decay_steps.')
     parser.add_argument(
         '--dropout', type=float, default=0.9,
         help='Keep probability for training dropout.')
