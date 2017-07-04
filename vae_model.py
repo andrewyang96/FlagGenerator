@@ -19,8 +19,8 @@ SUMMARY_STEP = 100
 MODEL_PATH = '/tmp/flag_generator_vae.ckpt'
 
 # network parameters
-INPUT_WIDTH = 180
-INPUT_HEIGHT = 120
+INPUT_WIDTH = 72
+INPUT_HEIGHT = 48
 NUM_CHANNELS = 3
 
 
