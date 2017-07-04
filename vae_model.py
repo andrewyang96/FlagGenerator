@@ -77,7 +77,7 @@ def encoder(x):
         std_encoder = tf.exp(log_sigma_encoder)
         z = tf.add(mu_encoder, tf.multiply(std_encoder, epsilon))
         variable_summaries(z)
-    return z
+    return mu_encoder, log_sigma_encoder, epsilon, z
 
 
 def decoder(x):
@@ -137,7 +137,7 @@ def train():
     x = tf.placeholder(
         tf.float32, [None, INPUT_WIDTH * INPUT_HEIGHT * NUM_CHANNELS])
 
-    latent_layer = encoder(x)
+    mu_layer, log_sigma_layer, epsilon_layer, latent_layer = encoder(x)
     reconstructed_layer = decoder(latent_layer)
 
     with tf.name_scope('loss'):
@@ -192,6 +192,9 @@ def train():
 
     # Save model
     sess.graph.add_to_collection('x', x)
+    sess.graph.add_to_collection('mu_layer', mu_layer)
+    sess.graph.add_to_collection('log_sigma_layer', log_sigma_layer)
+    sess.graph.add_to_collection('epsilon_layer', epsilon_layer)
     sess.graph.add_to_collection('latent_layer', latent_layer)
     sess.graph.add_to_collection('output_tensor', reconstructed_layer)
     sess.graph.add_to_collection('loss_tensor', cost)
