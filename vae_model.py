@@ -168,8 +168,8 @@ def train():
 
     # Save model
     sess.graph.add_to_collection('x', x)
-    sess.graph.add_to_collection('latent_layer', encoded)
-    sess.graph.add_to_collection('output_tensor', decoded)
+    sess.graph.add_to_collection('latent_layer', latent_layer)
+    sess.graph.add_to_collection('output_tensor', reconstructed_layer)
     sess.graph.add_to_collection('loss_tensor', cost)
     saver = tf.train.Saver()
     saver.save(sess, MODEL_PATH)
