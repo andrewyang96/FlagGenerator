@@ -4,13 +4,13 @@ import glob
 from PIL import Image
 import numpy as np
 
-def load_data(data_dir, input_size):
+def load_data(data_dir, input_size, norm_func):
     """Load data into an array of 3-D numpy arrays."""
     image_files = glob.glob('{0}/*.png'.format(data_dir))
     data = np.zeros((len(image_files), input_size), dtype=np.float32)
     for idx, image_file in enumerate(image_files):
-        im = Image.open(image_file)
-        data[idx] = np.array(im).flatten()
+        im = Image.open(image_file).convert('RGB')
+        data[idx] = norm_func(np.array(im).flatten())
     return data
 
 

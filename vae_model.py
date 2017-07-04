@@ -12,6 +12,7 @@ from layers import weight_variable
 import numpy as np
 import sys
 import tensorflow as tf
+# from tensorflow.python import debug as tf_debug
 
 # parameters
 DISPLAY_STEP = 10
@@ -24,34 +25,38 @@ INPUT_HEIGHT = 48
 NUM_CHANNELS = 3
 
 
+def has_inf_or_nan(datum, tensor):
+    return np.any(np.isnan(tensor)) or np.any(np.isinf(tensor))
+
+
 def encoder(x):
     """Create encoder given placeholder input tensor."""
     # Encoding layer
     with tf.name_scope('encoder1'):
         with tf.name_scope('weights'):
             weights1 = weight_variable(
-                [INPUT_WIDTH * INPUT_HEIGHT * NUM_CHANNELS, 4096])
+                [INPUT_WIDTH * INPUT_HEIGHT * NUM_CHANNELS, 4096], stddev=0.001)
             variable_summaries(weights1)
         with tf.name_scope('biases'):
-            biases1 = bias_variable([4096])
+            biases1 = bias_variable([4096], init_val=0.001)
         layer1 = fc_layer(x, weights1, biases1)
 
     # Mu encoder layer
     with tf.name_scope('mu_encoder'):
         with tf.name_scope('weights'):
-            weights_mu = weight_variable([4096, 1024])
+            weights_mu = weight_variable([4096, 1024], stddev=0.001)
             variable_summaries(weights_mu)
         with tf.name_scope('biases'):
-            biases_mu = bias_variable([1024])
+            biases_mu = bias_variable([1024], init_val=0.001)
         mu_encoder = fc_layer(layer1, weights_mu, biases_mu)
 
     # Log(sigma) encoder layer
     with tf.name_scope('log_sigma_encoder'):
         with tf.name_scope('weights'):
-            weights_log_sigma = weight_variable([4096, 1024])
+            weights_log_sigma = weight_variable([4096, 1024], stddev=0.001)
             variable_summaries(weights_log_sigma)
         with tf.name_scope('biases'):
-            biases_log_sigma = bias_variable([1024])
+            biases_log_sigma = bias_variable([1024], init_val=0.001)
         log_sigma_encoder = fc_layer(
             layer1, weights_log_sigma, biases_log_sigma)
 
@@ -71,21 +76,21 @@ def decoder(x):
     # Decoding layer 1
     with tf.name_scope('decoder1'):
         with tf.name_scope('weights'):
-            weights1 = weight_variable([1024, 4096])
+            weights1 = weight_variable([1024, 4096], stddev=0.001)
             variable_summaries(weights1)
         with tf.name_scope('biases'):
-            biases1 = bias_variable([4096])
+            biases1 = bias_variable([4096], init_val=0.001)
         layer1 = fc_layer(x, weights1, biases1)
 
     # Decoding layer 2
     with tf.name_scope('decoder2'):
         with tf.name_scope('weights'):
             weights2 = weight_variable(
-                [4096, INPUT_WIDTH * INPUT_HEIGHT * NUM_CHANNELS])
+                [4096, INPUT_WIDTH * INPUT_HEIGHT * NUM_CHANNELS], stddev=0.001)
             variable_summaries(weights2)
         with tf.name_scope('biases'):
             biases2 = bias_variable(
-                [INPUT_WIDTH * INPUT_HEIGHT * NUM_CHANNELS])
+                [INPUT_WIDTH * INPUT_HEIGHT * NUM_CHANNELS], init_val=0.001)
         layer2 = fc_layer(layer1, weights2, biases2)
     return layer2
 
@@ -100,11 +105,15 @@ def get_feed_dict(x, train_data, test_data, is_train=True):
 
 def train():
     """Train method."""
+    norm_func = np.vectorize(lambda value: value / 255)
     data = load_data(
         data_dir=FLAGS.data_dir,
-        input_size=INPUT_WIDTH * INPUT_HEIGHT * NUM_CHANNELS)
+        input_size=INPUT_WIDTH * INPUT_HEIGHT * NUM_CHANNELS,
+        norm_func=norm_func)
     train_data, test_data = partition_data(data)
     sess = tf.InteractiveSession()
+    # sess = tf_debug.LocalCLIDebugWrapperSession(sess)
+    # sess.add_tensor_filter("has_inf_or_nan", tf_debug.has_inf_or_nan)
 
     # Tensorflow graph inputs
     x = tf.placeholder(
