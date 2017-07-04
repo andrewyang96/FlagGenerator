@@ -29,14 +29,24 @@ if __name__ == '__main__':
         saver = tf.train.import_meta_graph(MODEL_PATH + '.meta')
         saver.restore(sess, MODEL_PATH)
 
-        latent_layer = sess.graph.get_collection('latent_layer')[0]
+        mu_layer = sess.graph.get_collection('mu_layer')[0]
+        log_sigma_layer = sess.graph.get_collection('log_sigma_layer')[0]
+        epsilon_layer = sess.graph.get_collection('epsilon_layer')[0]
         output_tensor = sess.graph.get_collection('output_tensor')[0]
 
         for i in range(FLAGS.num_images):
             print('Generating flag', i + 1, 'of', FLAGS.num_images)
-            feed_dict = {latent_layer: np.random.normal(0, 1, (1, latent_layer.get_shape()[1]))}
+            feed_dict = {
+                mu_layer: np.random.normal(
+                    0, 0.1, (1, mu_layer.get_shape()[1])),
+                log_sigma_layer: np.random.normal(
+                    0, 0.1, (1, log_sigma_layer.get_shape()[1])),
+                epsilon_layer: np.random.normal(
+                    0, 1, (1, epsilon_layer.get_shape()[1]))
+            }
             output = sess.run([output_tensor], feed_dict=feed_dict)[0]
-            output = pixel_value_func(output).reshape((INPUT_HEIGHT, INPUT_WIDTH, NUM_CHANNELS))
+            output = pixel_value_func(output).reshape(
+                (INPUT_HEIGHT, INPUT_WIDTH, NUM_CHANNELS))
             # print(output.max(), output.min(), output.mean())
             im = Image.fromarray(output, mode='RGB')
             filename = os.path.join('generated_flags', '{0}.png'.format(i))

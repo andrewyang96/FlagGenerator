@@ -44,28 +44,28 @@ def encoder(x):
     # Encoding layer 2
     with tf.name_scope('encoder2'):
         with tf.name_scope('weights'):
-            weights2 = weight_variable([2048, 1024], stddev=0.01)
+            weights2 = weight_variable([2048, 512], stddev=0.01)
             variable_summaries(weights1)
         with tf.name_scope('biases'):
-            biases2 = bias_variable([1024], init_val=0.01)
+            biases2 = bias_variable([512], init_val=0.01)
         layer2 = fc_layer(layer1, weights2, biases2)
 
     # Mu encoder layer
     with tf.name_scope('mu_encoder'):
         with tf.name_scope('weights'):
-            weights_mu = weight_variable([1024, 512], stddev=0.01)
+            weights_mu = weight_variable([512, 64], stddev=0.1)
             variable_summaries(weights_mu)
         with tf.name_scope('biases'):
-            biases_mu = bias_variable([512], init_val=0.01)
+            biases_mu = bias_variable([64], init_val=0.1)
         mu_encoder = fc_layer(layer2, weights_mu, biases_mu)
 
     # Log(sigma) encoder layer
     with tf.name_scope('log_sigma_encoder'):
         with tf.name_scope('weights'):
-            weights_log_sigma = weight_variable([1024, 512], stddev=0.01)
+            weights_log_sigma = weight_variable([512, 64], stddev=0.1)
             variable_summaries(weights_log_sigma)
         with tf.name_scope('biases'):
-            biases_log_sigma = bias_variable([512], init_val=0.01)
+            biases_log_sigma = bias_variable([64], init_val=0.1)
         log_sigma_encoder = fc_layer(
             layer2, weights_log_sigma, biases_log_sigma)
 
@@ -85,16 +85,16 @@ def decoder(x):
     # Decoding layer 1
     with tf.name_scope('decoder1'):
         with tf.name_scope('weights'):
-            weights1 = weight_variable([512, 1024], stddev=0.01)
+            weights1 = weight_variable([64, 512], stddev=0.1)
             variable_summaries(weights1)
         with tf.name_scope('biases'):
-            biases1 = bias_variable([1024], init_val=0.01)
+            biases1 = bias_variable([512], init_val=0.1)
         layer1 = fc_layer(x, weights1, biases1)
 
     # Decoding layer 2
     with tf.name_scope('decoder2'):
         with tf.name_scope('weights'):
-            weights2 = weight_variable([1024, 2048], stddev=0.01)
+            weights2 = weight_variable([512, 2048], stddev=0.01)
             variable_summaries(weights1)
         with tf.name_scope('biases'):
             biases2 = bias_variable([2048], init_val=0.01)
