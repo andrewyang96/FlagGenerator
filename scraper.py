@@ -1,6 +1,8 @@
 """Scraper script."""
 
 import argparse
+from datetime import datetime
+from datetime import timezone
 import io
 import os
 from PIL import Image
@@ -42,6 +44,7 @@ def process_imgur_submission(imgur, url, outfile_name):
 def process_submission(imgur, sub, outfile_name):
     """Extract image from submission. If it exists, processes and saves it."""
     if '/imgur.com/' in sub.url:
+        # printing sub.url can cause a UnicodeEncodeError or UnicodeDecdeError
         return process_imgur_submission(imgur, sub.url, outfile_name)
     if not sub.url.endswith(('.jpg', '.jpeg', '.png')):
         print('Skipping', sub.url)
@@ -83,8 +86,28 @@ if __name__ == '__main__':
         client_secret=FLAGS.reddit_client_secret,
         user_agent=FLAGS.user_agent)
     imgur = pyimgur.Imgur(FLAGS.imgur_client_id)
-    oc_subs = r.subreddit('vexillology').search("flair:'OC'", limit=1000)
+
+    start_timestamp = 1279756800 # July 22, 2010
+    end_timestamp = datetime.utcnow().timestamp()
+    num_iterations = 100
+
+    delta = (end_timestamp - start_timestamp) / num_iterations
+    vexillology = r.subreddit('vexillology')
     count = 0
-    for sub in oc_subs:
-        process_submission(imgur, sub, count)
-        count += 1
+
+    for i in range(num_iterations):
+        start_range = int(start_timestamp + i * delta)
+        end_range = int(start_timestamp + (i + 1) * delta)
+        print('Iteration {0}/{1}: Processing between {2} and {3}'.format(
+            i + 1, num_iterations, datetime.utcfromtimestamp(start_range),
+            datetime.utcfromtimestamp(end_range)))
+        oc_subs = vexillology.search(
+            "(and flair:'OC' timestamp:{0}..{1})".format(
+                start_range, end_range), syntax='cloudsearch', limit=None)
+        for sub in oc_subs:
+            try:
+                process_submission(imgur, sub, count)
+            except OSError as e:
+                print('Skipping due to error:', e)
+            count += 1
+        print('Count:', count)
